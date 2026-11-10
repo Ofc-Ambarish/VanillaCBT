@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBT Examination Platform</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/exam.css">
+</head>
+<body>
+  <header class="app-navbar">
+    <div class="brand-wrapper">
+      <div class="brand-icon">CBT</div>
+      <div>
+        <h1 class="brand-title" id="navbarExamTitle">WBPSC Industrial Development Officer</h1>
+        <p class="brand-subtitle" id="navbarOrgTitle">Computer-Based Examination System</p>
+      </div>
+    </div>
+    <div class="nav-controls" id="mainNavLinks">
+      <button class="btn btn-sm btn-outline-light" onclick="App.navigate('dashboard')">Dashboard</button>
+      <button class="btn btn-sm btn-outline-light" onclick="App.navigate('analytics')">Analytics</button>
+      <button class="btn btn-sm btn-outline-light" id="btnOpenSettings">Settings</button>
+      <button class="btn btn-sm btn-outline-light" id="btnExportBackup">Backup</button>
+      <button class="btn btn-sm btn-outline-light" id="btnTriggerRestore">Restore</button>
+      <input type="file" id="backupFileInput" class="d-none" accept=".json">
+      <button class="btn btn-sm btn-outline-warning" id="btnThemeToggle">&#9681;</button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <main id="viewDashboard" class="view-section container-fluid py-4 px-lg-5">
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-xl-2"><div class="stat-widget"><div><div class="stat-value" id="statTotalTests">10</div><div class="stat-label">Total Slots</div></div></div></div>
+      <div class="col-6 col-md-4 col-xl-2"><div class="stat-widget"><div><div class="stat-value text-success" id="statAvailableTests">0</div><div class="stat-label">Available</div></div></div></div>
+      <div class="col-6 col-md-4 col-xl-2"><div class="stat-widget"><div><div class="stat-value text-primary" id="statCompletedAttempts">0</div><div class="stat-label">Attempts</div></div></div></div>
+      <div class="col-6 col-md-4 col-xl-3"><div class="stat-widget"><div><div class="stat-value" id="statAvgScore">0.00</div><div class="stat-label">Average Score</div></div></div></div>
+      <div class="col-12 col-md-4 col-xl-3"><div class="stat-widget"><div><div class="stat-value text-success" id="statHighScore">0.00</div><div class="stat-label">Peak Score</div></div></div></div>
+    </div>
+
+    <div class="alert alert-primary d-flex align-items-center justify-content-between mb-4 shadow-sm">
+      <div><strong>Ready for Question Bank Upload:</strong> Zero preloaded questions. Download templates to import your custom question sets.</div>
+      <div class="d-flex gap-2">
+        <a href="templates/questions-template.csv" download class="btn btn-sm btn-primary">Question Template</a>
+        <a href="templates/answer-key-template.csv" download class="btn btn-sm btn-outline-primary">Answer Key Template</a>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold m-0">Mock Examination Slots</h4>
+      <button class="btn btn-sm btn-danger" id="btnResetAll">Reset Platform Data</button>
+    </div>
+    <div class="test-grid" id="testCardGrid"></div>
+  </main>
+
+  <!-- CBT EXAM -->
+  <main id="viewExam" class="view-section d-none">
+    <div class="cbt-container">
+      <section class="cbt-main-panel">
+        <div class="cbt-exam-header">
+          <div><span class="badge bg-dark text-white me-2" id="cbtTestName">Mock Test 01</span><strong id="cbtExamName">Exam</strong></div>
+          <div class="d-flex align-items-center gap-2"><span class="small text-muted">Time:</span><div class="timer-badge" id="cbtTimer">00:00</div></div>
+        </div>
+        <div class="cbt-question-header">
+          <span id="cbtQuestionNumberLabel">Question 1</span>
+          <span class="badge bg-light text-dark border" id="cbtSubjectBadge">General</span>
+        </div>
+        <div class="cbt-question-body">
+          <div class="cbt-question-text" id="cbtQuestionText">Question text</div>
+          <div id="cbtOptionsContainer"></div>
+        </div>
+        <div class="cbt-action-footer">
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" id="btnMarkReview" onclick="App.toggleMark()">Mark for Review</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="App.clearCurrent()">Clear</button>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-secondary btn-sm" id="btnPrevQuestion" onclick="App.prev()">Previous</button>
+            <button class="btn btn-primary btn-sm" onclick="App.next()">Save & Next</button>
+            <button class="btn btn-danger btn-sm fw-bold ms-2" onclick="App.confirmSubmit()">Submit</button>
+          </div>
+        </div>
+      </section>
+      <aside class="cbt-sidebar-panel">
+        <div class="palette-legend">
+          <div><span class="badge state-answered rounded-pill">&nbsp;</span> Ans (<span id="countAnswered">0</span>)</div>
+          <div><span class="badge state-not-answered rounded-pill">&nbsp;</span> Not Ans (<span id="countNotAnswered">0</span>)</div>
+          <div><span class="badge state-marked-review rounded-pill">&nbsp;</span> Marked (<span id="countMarked">0</span>)</div>
+          <div><span class="badge state-answered-marked rounded-pill">&nbsp;</span> Ans & Mkd (<span id="countAnsweredMarked">0</span>)</div>
+          <div><span class="badge state-not-visited rounded-pill">&nbsp;</span> Not Vis (<span id="countNotVisited">0</span>)</div>
+        </div>
+        <div class="palette-grid" id="cbtPaletteGrid"></div>
+        <div class="p-2 border-top text-center bg-light">
+          <button class="btn btn-success w-100 btn-sm fw-bold" onclick="App.confirmSubmit()">Final Submit</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- RESULT -->
+  <main id="viewResult" class="view-section d-none container py-4">
+    <div class="card-custom text-center p-4 mb-4">
+      <h3 class="fw-bold mb-1">Examination Completed</h3>
+      <div class="row g-3 my-3">
+        <div class="col-md-3"><div class="border rounded p-3"><div class="fs-2 fw-bold text-primary" id="resFinalScore">0.00</div><div class="small text-muted">Net Score / <span id="resMaxMarks">0</span></div></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="fs-2 fw-bold text-success" id="resAccuracy">0%</div><div class="small text-muted">Accuracy</div></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="fs-2 fw-bold text-info" id="resAttemptRate">0%</div><div class="small text-muted">Attempt Rate</div></div></div>
+        <div class="col-md-3"><div class="border rounded p-3"><div class="fs-2 fw-bold text-secondary" id="resTimeTaken">0m</div><div class="small text-muted">Time Consumed (<span id="resAvgTime">0s</span>/q)</div></div></div>
+      </div>
+      <div class="d-flex justify-content-center gap-3 my-2">
+        <span class="badge bg-success">Correct: <span id="resCorrect">0</span></span>
+        <span class="badge bg-danger">Incorrect: <span id="resIncorrect">0</span></span>
+        <span class="badge bg-secondary">Unattempted: <span id="resUnattempted">0</span></span>
+      </div>
+      <div class="mt-4 d-flex justify-content-center gap-3">
+        <button class="btn btn-primary" onclick="App.navigate('review', { attemptRecord: App.activeAttemptRecord })">Review Answers</button>
+        <button class="btn btn-outline-secondary" onclick="App.navigate('dashboard')">Back to Dashboard</button>
+      </div>
+    </div>
+    <div class="card-custom">
+      <h5 class="fw-bold mb-3">Subject Performance</h5>
+      <table class="table table-bordered mb-0"><thead class="table-light"><tr><th>Subject</th><th>Total</th><th>Correct</th><th>Incorrect</th><th>Unattempted</th><th>Accuracy</th></tr></thead><tbody id="resSubjectTableBody"></tbody></table>
+    </div>
+  </main>
+
+  <!-- REVIEW -->
+  <main id="viewReview" class="view-section d-none container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="fw-bold m-0">Detailed Question Review</h4>
+      <button class="btn btn-outline-secondary btn-sm" onclick="App.navigate('dashboard')">Back to Dashboard</button>
+    </div>
+    <div class="btn-group mb-4">
+      <button class="btn btn-outline-primary btn-filter-review active" data-filter="all" onclick="App.setFilter('all')">All</button>
+      <button class="btn btn-outline-success btn-filter-review" data-filter="correct" onclick="App.setFilter('correct')">Correct</button>
+      <button class="btn btn-outline-danger btn-filter-review" data-filter="incorrect" onclick="App.setFilter('incorrect')">Incorrect</button>
+      <button class="btn btn-outline-secondary btn-filter-review" data-filter="unattempted" onclick="App.setFilter('unattempted')">Unattempted</button>
+    </div>
+    <div id="reviewQuestionContainer"></div>
+  </main>
+
+  <!-- ANALYTICS -->
+  <main id="viewAnalytics" class="view-section d-none container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold m-0">Performance Insights</h4>
+      <button class="btn btn-outline-secondary btn-sm" onclick="App.navigate('dashboard')">Back to Dashboard</button>
+    </div>
+    <div id="analyticsEmptyState" class="card-custom text-center py-5 d-none"><h6 class="text-muted">No test attempts recorded yet.</h6></div>
+    <div id="analyticsContent">
+      <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="stat-widget"><div><div class="stat-value" id="anTotalAttempts">0</div><div class="stat-label">Tests Taken</div></div></div></div>
+        <div class="col-md-3"><div class="stat-widget"><div><div class="stat-value text-primary" id="anAvgScore">0.00</div><div class="stat-label">Avg Score</div></div></div></div>
+        <div class="col-md-3"><div class="stat-widget"><div><div class="stat-value text-success" id="anHighScore">0.00</div><div class="stat-label">Peak Score</div></div></div></div>
+        <div class="col-md-3"><div class="stat-widget"><div><div class="stat-value text-info" id="anAvgAcc">0%</div><div class="stat-label">Avg Accuracy</div></div></div></div>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6"><div class="card-custom"><h6 class="fw-bold mb-3">Score Progression</h6><canvas id="chartScoreProgression" width="400" height="220"></canvas></div></div>
+        <div class="col-md-6"><div class="card-custom"><h6 class="fw-bold mb-3">Latest Attempt Breakdown</h6><canvas id="chartLatestBreakdown" width="400" height="220"></canvas></div></div>
+        <div class="col-12"><div class="card-custom"><h6 class="fw-bold mb-3">Subject Accuracy (%)</h6><canvas id="chartSubjectAccuracy" width="800" height="220"></canvas></div></div>
+      </div>
+      <div class="card-custom">
+        <h6 class="fw-bold mb-2">Diagnostic Insights</h6>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between"><span>Strongest Subject:</span><strong class="text-success" id="anStrongestSubj">—</strong></li>
+          <li class="list-group-item d-flex justify-content-between"><span>Area Requiring Focus:</span><strong class="text-danger" id="anWeakestSubj">—</strong></li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODALS -->
+  <div id="modalImport" class="modal-backdrop-custom d-none">
+    <div class="modal-content-custom p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0">Import Content for <span id="importTargetTestLabel">Slot #1</span></h5>
+        <button class="btn-close" onclick="App.closeImportModal()"></button>
+      </div>
+      <input type="hidden" id="importTargetTestId">
+      <div class="mb-3">
+        <label class="form-label fw-bold small">1. Question Bank CSV</label>
+        <input type="file" id="importQuestionsFile" class="form-control form-control-sm" accept=".csv">
+        <small class="text-muted">Headers: <code>Test,Question,A,B,C,D,Subject,Explanation</code></small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold small">2. Answer Key CSV</label>
+        <input type="file" id="importAnswersFile" class="form-control form-control-sm" accept=".csv">
+        <small class="text-muted">Headers: <code>Test,QuestionNo,CorrectAnswer</code></small>
+      </div>
+      <div id="importLogContainer" class="mb-3"></div>
+      <div class="d-flex justify-content-end gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="App.closeImportModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="App.processImport()">Validate & Import</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalSettings" class="modal-backdrop-custom d-none">
+    <div class="modal-content-custom p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold m-0">Universal Exam Configuration</h5>
+        <button class="btn-close" onclick="App.closeSettingsModal()"></button>
+      </div>
+      <div class="mb-2"><label class="form-label small fw-bold">Exam Name</label><input type="text" id="cfgExamName" class="form-control form-control-sm"></div>
+      <div class="mb-2"><label class="form-label small fw-bold">Organization</label><input type="text" id="cfgOrganization" class="form-control form-control-sm"></div>
+      <div class="mb-2"><label class="form-label small fw-bold">Category</label><input type="text" id="cfgCategory" class="form-control form-control-sm"></div>
+      <div class="row g-2 mb-2">
+        <div class="col-6"><label class="form-label small fw-bold">Total Slots</label><input type="number" id="cfgSlots" class="form-control form-control-sm"></div>
+        <div class="col-6"><label class="form-label small fw-bold">Duration (Mins)</label><input type="number" id="cfgDuration" class="form-control form-control-sm"></div>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col-6"><label class="form-label small fw-bold">Correct Mark (+)</label><input type="number" step="0.05" id="cfgMarksCorrect" class="form-control form-control-sm"></div>
+        <div class="col-6"><label class="form-label small fw-bold">Negative Mark (-)</label><input type="number" step="0.05" id="cfgMarksIncorrect" class="form-control form-control-sm"></div>
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="App.closeSettingsModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="App.saveSettingsForm()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="vendor/chart.fallback.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/importer.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/test-manager.js"></script>
+  <script src="js/exam-engine.js"></script>
+  <script src="js/review.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

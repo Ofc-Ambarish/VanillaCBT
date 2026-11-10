@@ -1,0 +1,31 @@
+/* Dashboard Specific */
+.stat-widget {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.stat-widget .stat-value { font-size: 1.75rem; font-weight: 700; }
+.stat-widget .stat-label { font-size: 0.825rem; color: var(--text-muted); text-transform: uppercase; }
+
+.test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.test-card {
+  display: flex; flex-direction: column; justify-content: space-between;
+  border-top: 4px solid var(--secondary-navy);
+}
+.test-card.has-questions { border-top-color: var(--cbt-green); }
+.test-card.no-questions { border-top-color: #6c757d; }
+
+.test-meta-list { list-style: none; padding: 0; margin: 0.75rem 0 1.25rem 0; }
+.test-meta-list li {
+  display: flex; justify-content: space-between;
+  padding: 0.35rem 0; font-size: 0.875rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+.test-meta-list li:last-child { border-bottom: none; }
